@@ -1,38 +1,16 @@
 import streamlit as st
-import pandas as pd
-import os
+import requests
 
+# Page config
 st.set_page_config(page_title="Questionnaire TGR", page_icon="📋", layout="centered")
 
-# ✅ FIXED CSS (titles visible)
+# Modern UI
 st.markdown("""
 <style>
-
-/* GLOBAL */
-body {
-    background-color: #0e1117;
-    color: white;
-}
-
-/* CONTAINER */
-.block-container {
-    max-width: 700px;
-}
-
-/* TITLE */
-h1 {
-    text-align: center;
-    color: white;
-}
-
-/* DESCRIPTION */
-.desc {
-    text-align: center;
-    color: #c9d1d9;
-    margin-bottom: 30px;
-}
-
-/* CARD */
+body { background-color: #0e1117; color: white; }
+.block-container { max-width: 700px; }
+h1 { text-align: center; color: white; }
+.desc { text-align: center; color: #c9d1d9; margin-bottom: 30px; }
 .card {
     background-color: #161b22;
     padding: 20px;
@@ -40,27 +18,19 @@ h1 {
     margin-bottom: 20px;
     border: 1px solid #30363d;
 }
-
-/* ✅ IMPORTANT FIX: show question titles */
 label, .stMarkdown, p {
     color: #ffffff !important;
     font-size: 16px !important;
 }
-
-/* RADIO */
 .stRadio > div {
     background-color: #0e1117;
     padding: 10px;
     border-radius: 10px;
 }
-
-/* INPUTS */
 input, textarea {
     background-color: #0e1117 !important;
     color: white !important;
 }
-
-/* BUTTON */
 .stButton>button {
     width: 100%;
     background: linear-gradient(135deg, #4CAF50, #2ecc71);
@@ -70,11 +40,10 @@ input, textarea {
     padding: 12px;
     border: none;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
-# HEADER
+# Header
 st.markdown("<h1>📋 Enquête sur la qualité du service administratif (TGR)</h1>", unsafe_allow_html=True)
 
 st.markdown("""
@@ -85,7 +54,7 @@ Les réponses resteront strictement confidentielles.
 </div>
 """, unsafe_allow_html=True)
 
-# FORM
+# Form
 with st.form("formulaire"):
 
     st.markdown('<div class="card">', unsafe_allow_html=True)
@@ -124,11 +93,13 @@ with st.form("formulaire"):
 
     submit = st.form_submit_button("🚀 Envoyer ma réponse")
 
-# SAVE
+# Save to Google Sheets
 if submit:
     if poste.strip() == "":
         st.error("Veuillez remplir votre poste.")
     else:
+        url = "https://sheetdb.io/api/v1/u0qfywu9chy55"
+
         data = {
             "Poste": poste,
             "Ancienneté": anciennete,
@@ -148,7 +119,9 @@ if submit:
             "Suggestions": suggestions
         }
 
-        file_exists = os.path.isfile("reponses.csv")
-        pd.DataFrame([data]).to_csv("reponses.csv", mode="a", header=not file_exists, index=False)
+        response = requests.post(url, json=data)
 
-        st.success("✅ Merci ! Votre réponse a été enregistrée.")
+        if response.status_code == 201:
+            st.success("✅ Merci ! Votre réponse a été enregistrée avec succès.")
+        else:
+            st.error("❌ Erreur lors de l’envoi. Vérifiez la configuration.")
